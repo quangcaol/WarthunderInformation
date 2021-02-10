@@ -6,7 +6,7 @@ from tkinter import filedialog
 import time
 
 
-Parameter_index = [10,11,12,13,14,23,24,27,28,29]
+Parameter_index = ["AoA, deg","AoS, deg","Ny","Vy, m/s","Wx, deg/s","power 1, hp","RPM 1","pitch 1, deg","thrust 1, kgs","efficiency 1, %"]
 # index of AOA AOS Ny Vy Wx Power RPM Pitch Thrust Efficent 
 
 
@@ -100,6 +100,8 @@ class Window(tk.Frame):
             self.master.after_cancel(self.StateUpdate)
             return None
         data = elem.json()
+        if len(data) < 10:
+            return None
         return data
 
     def SourceParser(self,x):
@@ -107,11 +109,10 @@ class Window(tk.Frame):
            Return List of string consist of state label and value, List of value (INT)
         """
         Final_Value =[]
-        State_list = list(x.items())
         State_Value =[]
         for i in Parameter_index:
-            Final_Value.append(State_list[i][0] + '=' + str(State_list[i][1]))
-            State_Value.append(State_list[i][1])
+                Final_Value.append(i+'= '+str(x[i]))
+                State_Value.append(x[i])
         return Final_Value,State_Value
 
     def update_state(self):
@@ -120,9 +121,11 @@ class Window(tk.Frame):
         if source != None:
             State_value,Value = self.SourceParser(source)
             self.update_label(State_value,Value)
-        self.StateUpdate = self.master.after(self.delay, self.update_state)
+            self.StateUpdate = self.master.after(self.delay, self.update_state)
+
     def creditPanel(self):
         mb.showinfo(title="Author information",message="Lương Quang Cao, mp32212@gmail.com")
+
     def startRecord(self):
         """Function delcare necessary variable for recording task """
         self.filemenu.entryconfig("Record",state="disable")
@@ -130,6 +133,7 @@ class Window(tk.Frame):
         self.Second = 0
         self.Record = []
         self.master.after(self.T,self.update_record)
+
     def update_record(self):
         """Function update Record variable with state value every T milli second """
         self.Second += self.T
@@ -138,7 +142,13 @@ class Window(tk.Frame):
             State_value,Value = self.SourceParser(source)
             Value.append(self.Second)
             self.stateRecord = self.Record.append(Value)
+        else:
+            Value = [0,0,0,0,0,0,0,0,0]
+            Value.append(self.Second)
+            self.stateRecord = self.Record.append(Value)
+
         self.RecordState = self.master.after(self.T,self.update_record)
+
     def saveRecord(self):
         """Function write Record variable to file"""
         self.master.after_cancel(self.RecordState)

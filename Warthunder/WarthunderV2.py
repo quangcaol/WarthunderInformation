@@ -93,11 +93,25 @@ class Window(tk.Frame):
             elem = requests.get('http://127.0.0.1:8111/state',timeout = 3)
         except requests.exceptions.Timeout:
             mb.showerror("Error","Request timeout")
-            self.master.after_cancel(self.StateUpdate)
+            try:
+                self.master.after_cancel(self.StateUpdate)
+            except:
+                pass
+            try:
+                self.master.after_cancel(self.RecordState)
+            except:
+                pass
             return None
         except requests.exceptions.ConnectionError:
             mb.showerror("Error","Lost connection")
-            self.master.after_cancel(self.StateUpdate)
+            try:
+                self.master.after_cancel(self.StateUpdate)
+            except:
+                pass
+            try:
+                self.master.after_cancel(self.RecordState)
+            except:
+                pass
             return None
         data = elem.json()
         if len(data) < 10:
@@ -111,8 +125,12 @@ class Window(tk.Frame):
         Final_Value =[]
         State_Value =[]
         for i in Parameter_index:
-                Final_Value.append(i+'= '+str(x[i]))
-                State_Value.append(x[i])
+                if i in x.keys():
+                    Final_Value.append(i+'= '+str(x[i]))
+                    State_Value.append(x[i])
+                else:
+                    Final_Value.append("Dont available")
+                    State_Value.append(0)
         return Final_Value,State_Value
 
     def update_state(self):
@@ -132,7 +150,7 @@ class Window(tk.Frame):
         self.filemenu.entryconfig("Save as",state="normal")
         self.Second = 0
         self.Record = []
-        self.master.after(self.T,self.update_record)
+        self.RecordState = self.master.after(self.T,self.update_record)
 
     def update_record(self):
         """Function update Record variable with state value every T milli second """
@@ -147,7 +165,7 @@ class Window(tk.Frame):
             Value.append(self.Second)
             self.stateRecord = self.Record.append(Value)
 
-        self.RecordState = self.master.after(self.T,self.update_record)
+
 
     def saveRecord(self):
         """Function write Record variable to file"""
@@ -160,6 +178,8 @@ class Window(tk.Frame):
             listToStr = ','.join([str(elem) for elem in i])
             f.write(listToStr+'\n') 
         f.close()
+        self.filemenu.entryconfig("Record",state="normal")
+        self.filemenu.entryconfig("Save as",state="disable")
 
     
 
